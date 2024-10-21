@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f2f5;
+        }
+        h2 {
+            text-align: center;
+        }
+        .dashboard {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin: 20px;
+            width: 300px;
+            text-align: center;
+        }
+        #charts {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        canvas {
+            max-width: 500px;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Sensor Dashboard</h2>
+    <div class="dashboard">
+        <div class="card" id="current-temperature">
+            <h3>Temperatura Actual</h3>
+            <p id="temperature-value">-- °C</p>
+        </div>
+        <div class="card" id="current-humidity">
+            <h3>Humedad Actual</h3>
+            <p id="humidity-value">-- %</p>
+        </div>
+        <div class="card" id="max-values">
+            <h3>Valores Máximos</h3>
+            <p>Temperatura Máxima: <span id="max-temperature">-- °C</span></p>
+            <p>Humedad Máxima: <span id="max-humidity">-- %</span></p>
+        </div>
+    </div>
+    <div id="charts">
+        <canvas id="temperatureChart"></canvas>
+        <canvas id="humidityChart"></canvas>
+    </div>
+
+    <script>
+        const apiUrl = 'https://g2d2rsxvsh.execute-api.us-east-2.amazonaws.com/devices?device_id=test_iot';
+
+        async function fetchSensorData() {
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                updateDashboard(data);
+            } catch (error) {
+                console.error('Error fetching sensor data:', error);
+            }
+        }
+
+        let maxTemperature = -Infinity;
+        let maxHumidity = -Infinity;
+
+        function updateDashboard(data) {
+            const temperature = data.temperatureValue;
+            const humidity = data.humidityValue;
+
+            // Actualizar valores actuales
+            document.getElementById('temperature-value').textContent = `${temperature} °C`;
+            document.getElementById('humidity-value').textContent = `${humidity} %`;
+
+            // Actualizar valores máximos
+            if (temperature > maxTemperature) maxTemperature = temperature;
+            if (humidity > maxHumidity) maxHumidity = humidity;
+            document.getElementById('max-temperature').textContent = `${maxTemperature} °C`;
+            document.getElementById('max-humidity').textContent = `${maxHumidity} %`;
+
+            // Actualizar gráficos
+            updateCharts(data.history);
+        }
+
+        // Configuración de Chart.js
+        const temperatureCtx = document.getElementById('temperatureChart').getContext('2d');
+        const humidityCtx = document.getElementById('humidityChart').getContext('2d');
+
+        const temperatureChart = new Chart(temperatureCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Temperatura (°C)',
+                    data: [],
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 2,
+                    fill: false
+                }]
+            },
+            options: {
+                scales: {
+                    x: { type: 'time', time: { unit: 'minute' } },
+                    y: { beginAtZero: false }
+                }
+            }
+        });
+
+        const humidityChart = new Chart(humidityCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Humedad (%)',
+                    data: [],
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2,
+                    fill: false
+                }]
+            },
+            options: {
+                scales: {
+                    x: { type: 'time', time: { unit: 'minute' } },
+                    y: { beginAtZero: false }
+                }
+            }
+        });
+
+        function updateCharts(history) {
+            const timestamps = history.map(item => new Date(item.timestamp));
+            const temperatures = history.map(item => item.temperature || 0);
+            const humidities = history.map(item => item.humidity || 0);
+
+            temperatureChart.data.labels = timestamps;
+            temperatureChart.data.datasets[0].data = temperatures;
+            temperatureChart.update();
+
+            humidityChart.data.labels = timestamps;
+            humidityChart.data.datasets[0].data = humidities;
+            humidityChart.update();
+        }
+
+        // Actualizar datos cada 30 segundos
+        setInterval(fetchSensorData, 30000);
+        fetchSensorData();
+    </script>
+</body>
+</html>
