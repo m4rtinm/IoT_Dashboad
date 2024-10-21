@@ -92,7 +92,7 @@
             document.getElementById('max-humidity').textContent = `${maxHumidity} %`;
 
             // Actualizar gráficos
-            updateCharts(data.history);
+            updateCharts(data.history, temperature, humidity);
         }
 
         // Configuración de Chart.js
@@ -139,10 +139,10 @@
             }
         });
 
-        function updateCharts(history) {
+        function updateCharts(history, temperature, humidity) {
             const timestamps = history.map(item => new Date(item.timestamp));
-            const temperatures = history.map(item => item.temperature || 0);
-            const humidities = history.map(item => item.humidity || 0);
+            const temperatures = history.map((item, index) => index === history.length - 1 ? temperature : (item.temperature || temperature));
+            const humidities = history.map((item, index) => index === history.length - 1 ? humidity : (item.humidity || humidity));
 
             temperatureChart.data.labels = timestamps;
             temperatureChart.data.datasets[0].data = temperatures;
