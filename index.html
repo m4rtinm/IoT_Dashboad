@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sensor Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -113,7 +115,15 @@
             },
             options: {
                 scales: {
-                    x: { type: 'time', time: { unit: 'minute' } },
+                    x: { 
+                        type: 'time', 
+                        time: { unit: 'minute' },
+                        adapters: {
+                            date: {
+                                locale: moment.locale()
+                            }
+                        }
+                    },
                     y: { beginAtZero: false }
                 }
             }
@@ -133,7 +143,15 @@
             },
             options: {
                 scales: {
-                    x: { type: 'time', time: { unit: 'minute' } },
+                    x: { 
+                        type: 'time', 
+                        time: { unit: 'minute' },
+                        adapters: {
+                            date: {
+                                locale: moment.locale()
+                            }
+                        }
+                    },
                     y: { beginAtZero: false }
                 }
             }
